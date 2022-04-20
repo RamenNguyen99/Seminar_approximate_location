@@ -14,6 +14,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,6 +30,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var tvlatitude: TextView
     private lateinit var tvlongtitude: TextView
+    private lateinit var mapFragment: SupportMapFragment
+    private lateinit var googleMap: GoogleMap
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_ACCESS_LOCATION) {
             if (grantResults.isNotEmpty() &&
-                grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+//                grantResults[0] == PackageManager.PERMISSION_GRANTED &&
                 grantResults[1] == PackageManager.PERMISSION_GRANTED
             ) {
                 Toast.makeText(this, "Granted", Toast.LENGTH_SHORT).show()
@@ -57,10 +65,11 @@ class MainActivity : AppCompatActivity() {
     private fun getCurrentLocation() {
         if (checkPermissions()) {
             if (isLocationEnable()) {
-                if (ActivityCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ) != PackageManager.PERMISSION_GRANTED &&
+                if (
+//                    ActivityCompat.checkSelfPermission(
+//                        this,
+//                        Manifest.permission.ACCESS_FINE_LOCATION
+//                    ) != PackageManager.PERMISSION_GRANTED &&
                     ActivityCompat.checkSelfPermission(
                         this,
                         Manifest.permission.ACCESS_COARSE_LOCATION
@@ -78,6 +87,7 @@ class MainActivity : AppCompatActivity() {
                         Toast.makeText(this, "Get location success", Toast.LENGTH_SHORT).show()
                         tvlatitude.text = location.latitude.toString()
                         tvlongtitude.text = location.longitude.toString()
+                        showOnGoogleMap(location.latitude, location.longitude)
                     }
                 }
 
@@ -91,6 +101,22 @@ class MainActivity : AppCompatActivity() {
             // request permission here
             requestPermission()
         }
+    }
+
+    private fun showOnGoogleMap(latitude: Double, longitude: Double) {
+        mapFragment = supportFragmentManager.findFragmentById(R.id.ggMap) as SupportMapFragment
+        mapFragment.getMapAsync(OnMapReadyCallback { ggMap ->
+            googleMap = ggMap
+            googleMap.addMarker(
+                MarkerOptions().position(LatLng(latitude, longitude)).title("My Location")
+            )
+            googleMap.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(latitude, longitude),
+                    15f
+                )
+            )
+        })
     }
 
     private fun requestPermission() {
@@ -112,13 +138,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissions(): Boolean {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED &&
+        if (
+//            ActivityCompat.checkSelfPermission(
+//                this,
+//                Manifest.permission.ACCESS_FINE_LOCATION
+//            ) == PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(
                 this,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_COARSE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             return true
