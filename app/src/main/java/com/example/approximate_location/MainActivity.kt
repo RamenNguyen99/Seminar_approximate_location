@@ -16,7 +16,6 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
@@ -105,7 +104,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showOnGoogleMap(latitude: Double, longitude: Double) {
         mapFragment = supportFragmentManager.findFragmentById(R.id.ggMap) as SupportMapFragment
-        mapFragment.getMapAsync(OnMapReadyCallback { ggMap ->
+        mapFragment.getMapAsync { ggMap ->
             googleMap = ggMap
             googleMap.addMarker(
                 MarkerOptions().position(LatLng(latitude, longitude)).title("My Location")
@@ -116,7 +115,7 @@ class MainActivity : AppCompatActivity() {
                     15f
                 )
             )
-        })
+        }
     }
 
     private fun requestPermission() {
