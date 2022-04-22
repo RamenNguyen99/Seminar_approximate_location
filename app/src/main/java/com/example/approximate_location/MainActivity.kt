@@ -58,6 +58,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         Log.i("TAG", "onMapReady: onMapReady")
         map = googleMap
         updateLocationUI()
+        showOnGoogleMap()
     }
 
     override fun onRequestPermissionsResult(
@@ -94,7 +95,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             if (locationPermissionGranted) {
                 map.isMyLocationEnabled = true
                 map.uiSettings.isMyLocationButtonEnabled = true
-                showOnGoogleMap()
             } else {
                 map.isMyLocationEnabled = false
                 map.uiSettings.isMyLocationButtonEnabled = false
