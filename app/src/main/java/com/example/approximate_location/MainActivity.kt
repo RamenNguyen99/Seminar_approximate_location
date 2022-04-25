@@ -21,9 +21,10 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener {
 
     companion object {
         private const val PERMISSION_REQUEST_ACCESS_LOCATION = 100
@@ -35,6 +36,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapFragment: SupportMapFragment
     private lateinit var map: GoogleMap
     private lateinit var myLocation: LatLng
+
+    //    private lateinit var destination: LatLng
+    private var targetMarker: Marker? = null
     private var locationPermissionGranted = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,8 +61,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         Log.i("TAG", "onMapReady: onMapReady")
         map = googleMap
+        map.setOnMapClickListener(this)
         updateLocationUI()
         showOnGoogleMap()
+    }
+
+    override fun onMapClick(target: LatLng) {
+        Log.i("onMapClick", "onMapClick: $target")
+        targetMarker?.remove()
+        targetMarker = map.addMarker(
+            MarkerOptions().position(target).title("Target Location")
+        )
+        map.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                target,
+                15f
+            )
+        )
+//        destination = target
     }
 
     override fun onRequestPermissionsResult(
