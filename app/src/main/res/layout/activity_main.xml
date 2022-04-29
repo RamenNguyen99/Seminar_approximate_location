@@ -10,7 +10,7 @@
         android:id="@+id/ggMap"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="550dp"
+        android:layout_height="600dp"
         android:layout_margin="10dp"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -18,7 +18,7 @@
         android:id="@+id/tvLatitude"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="20dp"
         android:padding="10dp"
         android:text="latitude displays here"
         android:textColor="@color/black"
