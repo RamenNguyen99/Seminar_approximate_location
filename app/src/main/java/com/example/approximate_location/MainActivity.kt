@@ -14,17 +14,18 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.directions.route.*
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener {
+
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener,
+    RoutingListener {
 
     companion object {
         private const val PERMISSION_REQUEST_ACCESS_LOCATION = 100
@@ -34,10 +35,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private lateinit var tvLatitude: TextView
     private lateinit var tvLongitude: TextView
     private lateinit var mapFragment: SupportMapFragment
-    private lateinit var map: GoogleMap
+    private lateinit var ggmap: GoogleMap
     private lateinit var myLocation: LatLng
-
-    //    private lateinit var destination: LatLng
+    private lateinit var destination: LatLng
+    private val polylines: ArrayList<Polyline>? = null
     private var targetMarker: Marker? = null
     private var locationPermissionGranted = false
 
@@ -60,25 +61,38 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
     override fun onMapReady(googleMap: GoogleMap) {
         Log.i("TAG", "onMapReady: onMapReady")
-        map = googleMap
-        map.setOnMapClickListener(this)
+        ggmap = googleMap
         updateLocationUI()
         showOnGoogleMap()
+        ggmap.setOnMapClickListener(this)
     }
 
     override fun onMapClick(target: LatLng) {
         Log.i("onMapClick", "onMapClick: $target")
         targetMarker?.remove()
-        targetMarker = map.addMarker(
+        targetMarker = ggmap.addMarker(
             MarkerOptions().position(target).title("Target Location")
         )
-        map.animateCamera(
+        ggmap.animateCamera(
             CameraUpdateFactory.newLatLngZoom(
                 target,
                 15f
             )
         )
-//        destination = target
+        destination = target
+        // start route finding
+        findRoutes(myLocation, destination)
+    }
+
+    private fun findRoutes(myLocation: LatLng, destination: LatLng) {
+        val routing = Routing.Builder()
+            .travelMode(AbstractRouting.TravelMode.DRIVING)
+            .withListener(this)
+            .alternativeRoutes(true)
+            .waypoints(myLocation, destination)
+            .key("AIzaSyDKtwte0vOnlw78tlsyyly3003BIKZy57U")
+            .build()
+        routing.execute()
     }
 
     override fun onRequestPermissionsResult(
@@ -113,12 +127,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private fun updateLocationUI() {
         try {
             if (locationPermissionGranted) {
-                map.isMyLocationEnabled = true
-                map.uiSettings.isMyLocationButtonEnabled = true
+                ggmap.isMyLocationEnabled = true
+                ggmap.uiSettings.isMyLocationButtonEnabled = true
             } else {
-                map.isMyLocationEnabled = false
-                map.uiSettings.isMyLocationButtonEnabled = false
-//                lastKnownLocation = null
+                ggmap.isMyLocationEnabled = false
+                ggmap.uiSettings.isMyLocationButtonEnabled = false
                 Log.i("TAG", "Goi getLocationPermission: Tu updateLocationUI: ")
                 getLocationPermission()
             }
@@ -129,10 +142,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
     private fun getLocationPermission() {
         Log.i("TAG", "getLocationPermission: ")
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED &&
+        if (
+//            ActivityCompat.checkSelfPermission(
+//                this,
+//                Manifest.permission.ACCESS_FINE_LOCATION
+//            ) == PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_COARSE_LOCATION
@@ -150,7 +164,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         ActivityCompat.requestPermissions(
             this,
             arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
+//                Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ),
             PERMISSION_REQUEST_ACCESS_LOCATION
@@ -160,10 +174,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private fun showOnGoogleMap() {
         if (isLocationEnable()) {
             if (
-                ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED &&
+//                ActivityCompat.checkSelfPermission(
+//                    this,
+//                    Manifest.permission.ACCESS_FINE_LOCATION
+//                ) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(
                     this,
                     Manifest.permission.ACCESS_COARSE_LOCATION
@@ -185,10 +199,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                     tvLatitude.text = location.latitude.toString()
                     tvLongitude.text = location.longitude.toString()
                     Log.i("TAG", "showOnGoogleMap: Lay thanh cong")
-                    map.addMarker(
+                    ggmap.addMarker(
                         MarkerOptions().position(myLocation).title("My Location")
                     )
-                    map.animateCamera(
+                    ggmap.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(
                             myLocation,
                             15f
@@ -209,5 +223,46 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
                 locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
+
+    override fun onRoutingFailure(p0: RouteException?) {
+        Toast.makeText(this, "Routing Fails", Toast.LENGTH_SHORT).show()
+        Log.i("onRoutingFailure", "Fix this: $p0")
+    }
+
+    override fun onRoutingStart() {
+        Toast.makeText(this, "Finding route...", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onRoutingSuccess(route: ArrayList<Route>?, shortestRouteIndex: Int) {
+        polylines?.clear()
+        val polyOptions = PolylineOptions()
+        var polylineStartLatLng: LatLng? = myLocation
+        var polylineEndLatLng: LatLng? = destination
+        ggmap.clear()
+
+        //add route(s) to the map using polyline
+        for (i in 0 until route!!.size) {
+            if (i == shortestRouteIndex) {
+                polyOptions.color(resources.getColor(R.color.blue))
+                polyOptions.width(12f)
+                polyOptions.addAll(route[shortestRouteIndex].points)
+                val polyline: Polyline = ggmap.addPolyline(polyOptions)
+                polylineStartLatLng = polyline.points[0]
+                val k = polyline.points.size
+                polylineEndLatLng = polyline.points[k - 1]
+                polylines?.add(polyline)
+            } else {
+                // Unit
+            }
+        }
+        ggmap.addMarker(
+            MarkerOptions().position(polylineStartLatLng!!).title("polylineStart")
+        )
+        ggmap.addMarker(MarkerOptions().position(polylineEndLatLng!!).title("polylineEnd"))
+    }
+
+    override fun onRoutingCancelled() {
+        findRoutes(myLocation, destination)
     }
 }
