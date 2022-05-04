@@ -84,17 +84,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         findRoutes(myLocation, destination)
     }
 
-    private fun findRoutes(myLocation: LatLng, destination: LatLng) {
-        val routing = Routing.Builder()
-            .travelMode(AbstractRouting.TravelMode.DRIVING)
-            .withListener(this)
-            .alternativeRoutes(true)
-            .waypoints(myLocation, destination)
-            .key("AIzaSyDKtwte0vOnlw78tlsyyly3003BIKZy57U")
-            .build()
-        routing.execute()
-    }
-
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -104,7 +93,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         locationPermissionGranted = false
         when (requestCode) {
             PERMISSION_REQUEST_ACCESS_LOCATION -> {
-                // If request is cancelled, the result arrays are empty.
+                // Sometimes request is cancelled, the result arrays are empty.
                 if (grantResults.isNotEmpty() &&
                     grantResults[0] == PackageManager.PERMISSION_GRANTED &&
                     grantResults[1] == PackageManager.PERMISSION_GRANTED
@@ -121,6 +110,56 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
         updateLocationUI()
+    }
+
+    override fun onRoutingFailure(p0: RouteException?) {
+        Toast.makeText(this, "Routing Fails", Toast.LENGTH_SHORT).show()
+        Log.i("onRoutingFailure", "Fix this: $p0")
+    }
+
+    override fun onRoutingStart() {
+        Toast.makeText(this, "Finding route...", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onRoutingSuccess(route: ArrayList<Route>?, shortestRouteIndex: Int) {
+        polylines?.clear()
+        val polyOptions = PolylineOptions()
+        var polylineStartLatLng: LatLng? = myLocation
+        var polylineEndLatLng: LatLng? = destination
+        ggmap.clear()
+
+        //add route(s) to the map using polyline
+        for (i in 0 until route!!.size) {
+            if (i == shortestRouteIndex) {
+                polyOptions.color(resources.getColor(R.color.blue))
+                polyOptions.width(12f)
+                polyOptions.addAll(route[shortestRouteIndex].points)
+                val polyline: Polyline = ggmap.addPolyline(polyOptions)
+                polylineStartLatLng = polyline.points[0]
+                val k = polyline.points.size
+                polylineEndLatLng = polyline.points[k - 1]
+                polylines?.add(polyline)
+            } else {
+                // Unit
+            }
+        }
+        ggmap.addMarker(MarkerOptions().position(polylineStartLatLng!!).title("polylineStart"))
+        ggmap.addMarker(MarkerOptions().position(polylineEndLatLng!!).title("polylineEnd"))
+    }
+
+    override fun onRoutingCancelled() {
+        findRoutes(myLocation, destination)
+    }
+
+    private fun findRoutes(myLocation: LatLng, destination: LatLng) {
+        val routing = Routing.Builder()
+            .travelMode(AbstractRouting.TravelMode.DRIVING)
+            .withListener(this)
+            .alternativeRoutes(true)
+            .waypoints(myLocation, destination)
+            .key("AIzaSyBRIva2Tz9_H4hWRlE5nuW71tSVMCwYIa8")
+            .build()
+        routing.execute()
     }
 
     @SuppressLint("MissingPermission")
@@ -223,46 +262,5 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
                 locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-    }
-
-    override fun onRoutingFailure(p0: RouteException?) {
-        Toast.makeText(this, "Routing Fails", Toast.LENGTH_SHORT).show()
-        Log.i("onRoutingFailure", "Fix this: $p0")
-    }
-
-    override fun onRoutingStart() {
-        Toast.makeText(this, "Finding route...", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onRoutingSuccess(route: ArrayList<Route>?, shortestRouteIndex: Int) {
-        polylines?.clear()
-        val polyOptions = PolylineOptions()
-        var polylineStartLatLng: LatLng? = myLocation
-        var polylineEndLatLng: LatLng? = destination
-        ggmap.clear()
-
-        //add route(s) to the map using polyline
-        for (i in 0 until route!!.size) {
-            if (i == shortestRouteIndex) {
-                polyOptions.color(resources.getColor(R.color.blue))
-                polyOptions.width(12f)
-                polyOptions.addAll(route[shortestRouteIndex].points)
-                val polyline: Polyline = ggmap.addPolyline(polyOptions)
-                polylineStartLatLng = polyline.points[0]
-                val k = polyline.points.size
-                polylineEndLatLng = polyline.points[k - 1]
-                polylines?.add(polyline)
-            } else {
-                // Unit
-            }
-        }
-        ggmap.addMarker(
-            MarkerOptions().position(polylineStartLatLng!!).title("polylineStart")
-        )
-        ggmap.addMarker(MarkerOptions().position(polylineEndLatLng!!).title("polylineEnd"))
-    }
-
-    override fun onRoutingCancelled() {
-        findRoutes(myLocation, destination)
     }
 }
